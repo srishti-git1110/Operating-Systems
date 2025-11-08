@@ -9,4 +9,20 @@ By now, we know that the completion of a system call requires the processor to e
 - transitions into kernel mode ("traps into kernel mode") and utilizes the trap table to execute the said system call
 - return-from-trap to enter back into the user mode while restoring the registers from the kernel stack to be able to continue program execution at the correct place in user mode.
 
+(Read up on how the OS gains control once a process finishes execution.)
+
 ### Process Switching
+The question here is: how is process switching possible when the OS (which is just another program) isn't running on the CPU? If the OS isn't running, it can't really do the anything. This is the "Regain" problem—how to make the OS regain control?
+
+A timer interrupt (implemented at the hardware level as a physical device) interrupts the currently running processes every few ms and the control goes back to the OS that can then take the action its scheduler deems correct. 
+
+Say if a process A is running and encounters an interrupt. Here's the steps that happen next:
+1. The hardware saves the minimal necessary execution context (certain registers, program counter, flags etc.) in A's kernel stack.
+2. The system traps into the kernel mode (OS regains control) and jumps to the interrupt handler code that is then executed. Note at the time of reboot, the OS tells the hardware which code to run to handle the interrupts.
+3. If the scheduler (part of the OS and the handler code) now decides to execute a different process B (context switch as it's called), the switch() routine is called.
+4. A's "full" execution context and its kernel stack pointer are read by the OS from the physical registers and saved to A's process structure (PCB in the memory).
+5. B's full execution context is restored from its process structure (PCB that's in the memory again) into B's kernel stack. The OS also restores the execution context back onto the physical registers.
+6. The current stack pointer is made to point to B's kernel stack and a return from trap is executed.
+7. The hardware now restores the necessary user-state, pc, flags etc., from B's kernel stack (which the stack pointer is at) onto physical resources so that execution of B can next happen.
+(It's a bit confusing - both OS and the hardware are in charge of restoring values back to the physical registers. Need to learn more.)
+8. B's execution now starts in user mode using the program counter that was restored as one of the things.
