@@ -24,5 +24,9 @@ Say if a process A is running and encounters an interrupt. Here's the steps that
 5. B's full execution context is restored from its process structure (PCB that's in the memory again) into B's kernel stack. The OS also restores the execution context back onto the physical registers.
 6. The current stack pointer is made to point to B's kernel stack and a return from trap is executed.
 7. The hardware now restores the necessary user-state, pc, flags etc., from B's kernel stack (which the stack pointer is at) onto physical resources so that execution of B can next happen.
-(It's a bit confusing - both OS and the hardware are in charge of restoring values back to the physical registers. Need to learn more.)
 8. B's execution now starts in user mode using the program counter that was restored as one of the things.
+
+### Extra notes
+- The trap table, one that specifies what to do when a trap instruction is issue by a system call, is initialized at boot time by the OS. It cannot be modified by the user programs as that'd compromise the security by allowing the user programs to basically run whatever priviledge ops they want to.
+- The interrupt handler is the same -- at boot time, the os must specify to the hardware what code to run when an interrupt occurs.
+- While the OS is in charge of storing (and restoring) context from physical registers to the kernel stack and further to the PCB, the hardware is also responsible for the same only for a minimal set of context (the pc, flags, certain registers etc.) A question that I asked myself is that how could the CPU even do this without some software (OS/user program) asking it to do. Maybe a very naive question. The answer that I got is that this is possible via some built in logical circuitry on the CPU.
